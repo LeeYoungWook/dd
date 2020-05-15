@@ -1,0 +1,97 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Untitled17.ipynb",
+      "provenance": [],
+      "collapsed_sections": [],
+      "authorship_tag": "ABX9TyPF7uk8QtQCQbSvjKUn3RNw",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/LeeYoungWook/dd/blob/master/4.1%20a2c\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "fyJPfDJKOQXZ",
+        "colab_type": "text"
+      },
+      "source": [
+        ""
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "8dzV35VBOOIr",
+        "colab_type": "text"
+      },
+      "source": [
+        "# 4.1 배경\n",
+        "\n",
+        "A2C(Advantage actor-critic)는 REINFORCE알고리즘보다 더 빠르고 분산이 작다.\n",
+        "\n",
+        "#4.2 그래디언트의 재구성\n",
+        "\n",
+        "목적함수의 그래디언트를 명확히 규명해 보려고 한다.\n",
+        "\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B2%981.GIF?raw=true)\n",
+        "\n",
+        "이 목적함수 그래디언트의 소괄호항의 감가된 예정 보상의 총압을 두개의 영역을 분할하고, 대괄호항은 마르코프 가정에 적용하여 정리하면 다음과 같다.\n",
+        "\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B3%902.GIF?raw=true)\n",
+        "\n",
+        "헤이즈 정리를 적용하면 위 식은 다음과 같이 된다.\n",
+        "\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B2%983.GIF?raw=true)\n",
+        "\n",
+        "이제 목적함수의 그래디언트를 계산하기 위해서는 반환값 대신에 행동가치를 계산하면 구할 수 있다. 따라서 에피소드가 끝날 때까지 기다리지 않고, 시간스탭 t에서부터 에피소드가 끝날 때까지 얻을 것으로 기대되는 반환값의 기대값인 행동가치를 계산할 수 있음을 보여주는 그림은 다음과 같다.\n",
+        "\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B2%984.jpg?raw=true)\n",
+        "\n",
+        "# 4.3 분산을 감소시키기 위한 방법\n",
+        "\n",
+        "목적함수 그래디언트의 분산이 크다면 업데이트될 파라미터값이 들쭉날쭉하므로 신경망 학습이 불안정해지고 정책의 불확실성도 커지기 때문에, 분산을 줄이기 위한 방법을 알아보자.\n",
+        "\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B3%905.jpg?raw=true)\n",
+        "\n",
+        "우선 목적함수의 그래디언트는 다음과 같다.\n",
+        "\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B2%986.GIF?raw=true)\n",
+        "\n",
+        "베이스라인bt는 그래디언트의 분산을 줄이기 위해 도입되어도 앞 식은 0이 되므로 bt를 빼도 기대값은 변하지 않는다.\n",
+        "\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B3%907.GIF?raw=true)\n",
+        "\n",
+        "하지만 일반적으로 행동 ur의 함수가 아닌 상태가치 함수 v를 베이스라인으로 사용한다 \n",
+        "목적함수 그래디언트는 행동가치가 아닌 어드밴티지에 비례한다. 어드밴티지는 행동가치보다 작으므로 그래디언트의 분산이 작아질 것으로 기대 할 수 있다.\n",
+        "\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B2%9810.GIF?raw=true)\n",
+        "\n",
+        "상태가치는 상태변수xt 에서 선택가능한 모든행동ut 에 대한\n",
+        "행동가치의 평균값이므로 어드벤티지 함수는 상태변수xt 에서\n",
+        "선택된 행동ut 가 평균에 비해 얼마나 좋은지를 평가할 수 있는 척도로 해석 가능하다. \n",
+        "\n",
+        "결국 분산을 줄이기 위해서는 어드벤티지 함수를 정화학게 추정해야 한다.\n",
+        "\n",
+        "어드벤티지 액터-크리티(A2C)에 사용되는 목적함수 그래디언트는 다음과 같다.\n",
+        "![대체 텍스트](https://github.com/LeeYoungWook/dd/blob/master/%EC%BA%A1%EC%B2%989.jpg?raw=true)\n"
+      ]
+    }
+  ]
+}
